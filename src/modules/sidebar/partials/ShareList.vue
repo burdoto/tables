@@ -127,6 +127,8 @@ import Crown from 'vue-material-design-icons/Crown.vue'
 import Information from 'vue-material-design-icons/Information.vue'
 import Account from 'vue-material-design-icons/Account.vue'
 import moment from '@nextcloud/moment'
+import { showWarning } from '@nextcloud/dialogs'
+import '@nextcloud/dialogs/style.css'
 
 export default {
 	components: {
@@ -208,7 +210,13 @@ export default {
 		promoteToManager(share) {
 			this.$emit('update', { id: share.id, permission: 'manage', value: true })
 		},
-		demoteManager(share) {
+		async demoteManager(share) {
+			// TODO: might need to pass in the share receiver when fetching the contexts
+			// it seems like we only get the contexts for the currently logged in user
+			const contexts = await this.$store.dispatch('loadContextsForTable', { tableId: this.activeElement.id })
+			if (Array.isArray(contexts.contexts) && contexts.contexts.length && contexts.contexts.find(context => context.owner === share.receiver)) {
+				showWarning(t('tables', 'The account has created an application based on this table which will continue to consume its data'))
+			}
 			this.$emit('update', { id: share.id, permission: 'manage', value: false })
 		},
 		personHasTableManagePermission(userId) {
